@@ -1,0 +1,40 @@
+<title>Encryptor</title>
+
+<p>This HTML file is a data encryptor for use with the &lt;encrypted-data&gt;
+element. Open your developer console and you will see a base64-encoded text to
+be used as the body of the <code>&lt;script type=ciphertext&gt;</code> element
+in an &lt;encrypted-data&gt; element.</p>
+
+<template id=target>
+  <h1>&lt;encrypted-data&gt; element</h1>
+
+  <p>This custom element allows sending over the body of the element in an
+  encrypted form. It <code>prompt()</code>s the user for a password, and then
+  use that password to decrypt a previously encrypted ciphertext and set the
+  element's content to that.</p>
+
+  <p><strong>WARNING:</strong> It is not designed to be cryptographically
+  secure, as it is much easier and entirely doable for a dedicated attacker to
+  crack a local ciphertext without the network overhead. It is mostly useful
+  for fun, when you want it to be reasonably difficult for a casual attacker to
+  see the plaintext.</p>
+
+  <p>Check out the source code of this website to see how a typical usage of
+  the custom element looks like.</p>
+</template>
+
+<script>
+async function printCipherText(IV, PASSWORD, digest = 'SHA-256', encryption = 'AES-GCM') {
+  const src = document.getElementById('target').innerHTML;
+  const srcUtf8 = new TextEncoder().encode(src);
+  const pwUtf8 = new TextEncoder().encode(PASSWORD.toLowerCase().trim());
+  const pwHash = await crypto.subtle.digest(digest, pwUtf8);
+  const iv = new TextEncoder().encode(IV);
+  const alg = { name: encryption, iv };
+  const key = await crypto.subtle.importKey('raw', pwHash, alg, false, ['encrypt']);
+  const encryptedBuffer = await crypto.subtle.encrypt(alg, key, srcUtf8);
+  console.log(btoa(String.fromCharCode.apply(String, new Uint8Array(encryptedBuffer))));
+}
+
+printCipherText('encrypted-data-element', 'I am');
+</script>
